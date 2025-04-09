@@ -69,43 +69,42 @@ export default function Home() {
         setIsTesting(true);
         setTestContext('Running all tests...');
         setTestLogs(['🧪 Starting full test suite...']);
-
+    
         try {
-            const testPromises = questions.map((q, index) =>
-                (async () => {
-                    setTestLogs((prev) => [...prev, `🔄 Q${index + 1}: "${q.question.slice(0, 40)}..."`]);
-
+            for (let index = 0; index < questions.length; index++) {
+                const q = questions[index];
+                const logTime = new Date().toLocaleTimeString();
+                setTestLogs((prev) => [...prev, `${logTime} 🔄 Q${index + 1}: "${q.question.slice(0, 40)}..."`]);
+    
+                try {
                     const res = await fetch('/api/test/run', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ questionId: q.id }),
                     });
-
-                    try {
-                        const result = await res.json();
-                        if (res.ok) {
-                            setTestLogs((prev) => [...prev, `✅ Q${index + 1}: Score ${result.score}`]);
-                        } else {
-                            setTestLogs((prev) => [...prev, `❌ Q${index + 1}: ${result.error}`]);
-                        }
-                    } catch {
-                        setTestLogs((prev) => [...prev, `❗️ Q${index + 1}: Invalid JSON response`]);
+    
+                    const result = await res.json();
+                    if (res.ok) {
+                        setTestLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} ✅ Q${index + 1}: Score ${result.score}`]);
+                    } else {
+                        setTestLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} ❌ Q${index + 1}: ${result.error}`]);
                     }
-                })()
-            );
-
-            await Promise.all(testPromises);
-
-            setTestLogs((prev) => [...prev, '🎉 All tests complete']);
+                } catch (err) {
+                    setTestLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} ❗️ Q${index + 1}: Unexpected error`]);
+                }
+            }
+    
+            setTestLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} 🎉 All tests complete`]);
             setTimeout(() => window.location.reload(), 1000);
         } catch (err) {
-            setTestLogs((prev) => [...prev, `❗️ Unexpected error: ${err.message}`]);
+            setTestLogs((prev) => [...prev, `${new Date().toLocaleTimeString()} ❗️ Unexpected error: ${err.message}`]);
         } finally {
             setIsTesting(false);
             setTestContext('');
         }
     };
 
+    
     useEffect(() => {
         const handleBeforeUnload = (e) => {
             if (isTesting) {
