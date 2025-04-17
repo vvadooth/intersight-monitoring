@@ -1,5 +1,16 @@
 import { query } from '../../../lib/db';
 import bcrypt from 'bcryptjs';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+async function getEmbedding(text) {
+  const resp = await openai.embeddings.create({
+    input: text,
+    model: 'text-embedding-3-small',
+  });
+  return resp.data[0].embedding;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,7 +18,6 @@ export default async function handler(req, res) {
   }
 
   const { question, goldenTruth, password } = req.body;
-
   if (!question || !goldenTruth || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -18,12 +28,17 @@ export default async function handler(req, res) {
   }
 
   try {
+    const questionEmbedding = await getEmbedding(question);
+    const truthEmbedding = await getEmbedding(goldenTruth);
+
     const result = await query(
-      'INSERT INTO questions (question, golden_truth) VALUES ($1, $2) RETURNING *',
-      [question, goldenTruth]
+      'INSERT INTO questions (question, golden_truth, question_embedding, golden_truth_embedding) VALUES ($1, $2, $3, $4) RETURNING *',
+      [question, goldenTruth, questionEmbedding, truthEmbedding]
     );
+
     res.status(200).json(result.rows[0]);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to add question' });
   }
 }
