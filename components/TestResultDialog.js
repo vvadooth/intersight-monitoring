@@ -35,7 +35,7 @@ export default function TestResultDialog({ open, setOpen, question }) {
     if (open) {
       fetch(`/api/results/${question.id}`)
         .then((res) => res.json())
-        .then((data) => setResults(data));
+        .then((data) => setResults(data.sort((a, b) => b.score - a.score)));
     }
   }, [open, question]);
 
@@ -49,10 +49,31 @@ export default function TestResultDialog({ open, setOpen, question }) {
     labels: results.map((r) => new Date(r.created_at).toLocaleDateString()),
     datasets: [
       {
-        label: `Score for "${question.question}"`,
-        data: results.map((r) => r.score),
+        label: `Score for "${question.question}" (Gradio)`,
+        data: results.filter(r => r.source === 'Gradio').map((r) => r.score),
         borderColor: 'rgba(75, 192, 192, 1)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        fill: true,
+      },
+      {
+        label: `Score for "${question.question}" (BridgeIT)`,
+        data: results.filter(r => r.source === 'BridgeIT').map((r) => r.score),
+        borderColor: 'rgba(192, 75, 192, 1)',
+        backgroundColor: 'rgba(192, 75, 192, 0.2)',
+        fill: true,
+      },
+      {
+        label: `Score for "${question.question}" (Galileo)`,
+        data: results.filter(r => r.source === 'Galileo').map((r) => r.score),
+        borderColor: 'rgba(75, 75, 192, 1)',
+        backgroundColor: 'rgba(75, 75, 192, 0.2)',
+        fill: true,
+      },
+      {
+        label: `Score for "${question.question}" (Team Instance)`,
+        data: results.filter(r => r.source === 'IntersightAI-Team-Instance').map((r) => r.score),
+        borderColor: 'rgba(255, 165, 0, 1)',
+        backgroundColor: 'rgba(255, 165, 0, 0.2)',
         fill: true,
       },
     ],
@@ -62,7 +83,7 @@ export default function TestResultDialog({ open, setOpen, question }) {
     responsive: true,
     plugins: {
       legend: { position: 'top' },
-      title: { display: true, text: 'Score Over Time' },
+      title: { display: true, text: 'Score Over Time by Source' },
     },
     scales: {
       y: {
@@ -95,6 +116,8 @@ export default function TestResultDialog({ open, setOpen, question }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="whitespace-nowrap">Rank</TableHead>
+                <TableHead className="whitespace-nowrap">Source</TableHead>
                 <TableHead className="whitespace-nowrap">Date</TableHead>
                 <TableHead className="whitespace-nowrap">AI Response</TableHead>
                 <TableHead className="whitespace-nowrap">Score</TableHead>
@@ -102,8 +125,14 @@ export default function TestResultDialog({ open, setOpen, question }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.map((result) => (
-                <TableRow key={result.id}>
+              {results.map((result, index) => (
+                <TableRow key={`${result.id}-${result.source}`}>
+                  <TableCell className="align-top text-sm text-muted-foreground">
+                    {index + 1}
+                  </TableCell>
+                  <TableCell className="align-top text-sm font-medium">
+                    {result.source}
+                  </TableCell>
                   <TableCell className="align-top text-sm text-muted-foreground">
                     {new Date(result.created_at).toLocaleString()}
                   </TableCell>

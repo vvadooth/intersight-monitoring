@@ -17,6 +17,8 @@
     "@radix-ui/react-tabs": "^1.1.4",
     "@shadcn/ui": "^0.0.4",
     "@tanstack/react-table": "^8.21.2",
+    "axios": "^1.8.4",
+    "base-64": "^1.0.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.4.8",
