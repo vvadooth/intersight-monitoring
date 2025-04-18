@@ -22,7 +22,7 @@ async function getTeamInstanceResponse(message) {
     query: message,
     resultsLimit: 5,
     limit: 5,
-    distance: 1.2,
+    distance: 1.5,
     conversation: [{ role: 'user', content: message }],
     useGoogleSearch: true,
     useVectorSearch: true,
