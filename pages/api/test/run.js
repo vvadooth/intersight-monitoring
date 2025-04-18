@@ -79,7 +79,14 @@ async function getBridgeITResponse(message) {
 // --- Rank Responses ---
 async function rankResponses(responses, goldenTruth) {
   const prompt = `
-You are an evaluator tasked with ranking multiple AI responses based on their accuracy, relevance, and completeness compared to the golden truth. Be critical and fair. If a response is correct but includes extra details, it should still score highly unless the extra details are misleading. Provide a ranking with scores out of 100 and detailed explanations for each response.
+You are an evaluator tasked with ranking multiple AI responses based on their accuracy, relevance, and completeness compared to the golden truth. Please give a score out of 100.
+
+Be critical and fair. Responses must:
+- Contain all key points mentioned in the golden truth.
+- Be factually accurate and clearly worded.
+- Avoid introducing incorrect or misleading information.
+
+Responses that **omit important facts** from the golden truth — even if otherwise correct — should receive significantly lower scores. Extra details are acceptable **only if they are accurate and do not distract** from the main point.
 
 Your output **must match the source name exactly** as provided in the Responses section (e.g., "Response 1 (Source: Gradio)"). Do not use generic labels like "Response 1".
 
