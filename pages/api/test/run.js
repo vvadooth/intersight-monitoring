@@ -81,15 +81,18 @@ async function rankResponses(responses, goldenTruth) {
   const prompt = `
 You are an evaluator tasked with ranking multiple AI responses based on their accuracy, relevance, and completeness compared to the golden truth. Be critical and fair. If a response is correct but includes extra details, it should still score highly unless the extra details are misleading. Provide a ranking with scores out of 100 and detailed explanations for each response.
 
+Your output **must match the source name exactly** as provided in the Responses section (e.g., "Response 1 (Source: Gradio)"). Do not use generic labels like "Response 1".
+
 Return ONLY valid JSON in the following format:
 [
   {
-    "source": "<source>",
+    "source": "<exact source string from the Responses section>",
     "score": <number>,
     "explanation": "<string>"
   },
   ...
 ]
+
 
 DO NOT include any text outside the JSON. DO NOT use markdown. DO NOT add commentary before or after.
 
