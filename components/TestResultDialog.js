@@ -25,19 +25,45 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { ArrowUpDown, X, Filter } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 export default function TestResultDialog({ open, setOpen, question }) {
   const [results, setResults] = useState([]);
+  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'asc' });
+  const [activeSourceFilter, setActiveSourceFilter] = useState(null);
 
   useEffect(() => {
     if (open) {
       fetch(`/api/results/${question.id}`)
         .then((res) => res.json())
-        .then((data) => setResults(data.sort((a, b) => b.score - a.score)));
+        .then((data) => setResults(data));
     }
   }, [open, question]);
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const sortResults = () => {
+    let sorted = [...results];
+    const { key, direction } = sortConfig;
+    sorted.sort((a, b) => {
+      const valA = key === 'created_at' ? new Date(a[key]) : a[key];
+      const valB = key === 'created_at' ? new Date(b[key]) : b[key];
+      return direction === 'asc' ? valA - valB : valB - valA;
+    });
+
+    return activeSourceFilter
+      ? sorted.filter((r) => r.source === activeSourceFilter)
+      : sorted;
+  };
+
+  const uniqueSources = [...new Set(results.map((r) => r.source))];
 
   const formatScoreColor = (score) => {
     if (score >= 80) return 'bg-green-200 text-green-800';
@@ -46,32 +72,32 @@ export default function TestResultDialog({ open, setOpen, question }) {
   };
 
   const chartData = {
-    labels: results.map((r) => new Date(r.created_at).toLocaleDateString()),
+    labels: sortResults().map((r) => new Date(r.created_at).toLocaleDateString()),
     datasets: [
       {
         label: `Score for "${question.question}" (Gradio)`,
-        data: results.filter(r => r.source === 'Gradio').map((r) => r.score),
+        data: sortResults().filter((r) => r.source === 'Gradio').map((r) => r.score),
         borderColor: 'rgba(75, 192, 192, 1)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         fill: true,
       },
       {
         label: `Score for "${question.question}" (BridgeIT)`,
-        data: results.filter(r => r.source === 'BridgeIT').map((r) => r.score),
+        data: sortResults().filter((r) => r.source === 'BridgeIT').map((r) => r.score),
         borderColor: 'rgba(192, 75, 192, 1)',
         backgroundColor: 'rgba(192, 75, 192, 0.2)',
         fill: true,
       },
       {
         label: `Score for "${question.question}" (Galileo)`,
-        data: results.filter(r => r.source === 'Galileo').map((r) => r.score),
+        data: sortResults().filter((r) => r.source === 'Galileo').map((r) => r.score),
         borderColor: 'rgba(75, 75, 192, 1)',
         backgroundColor: 'rgba(75, 75, 192, 0.2)',
         fill: true,
       },
       {
         label: `Score for "${question.question}" (Team Instance)`,
-        data: results.filter(r => r.source === 'IntersightAI-Team-Instance').map((r) => r.score),
+        data: sortResults().filter((r) => r.source === 'IntersightAI-Team-Instance').map((r) => r.score),
         borderColor: 'rgba(255, 165, 0, 1)',
         backgroundColor: 'rgba(255, 165, 0, 0.2)',
         fill: true,
@@ -106,6 +132,25 @@ export default function TestResultDialog({ open, setOpen, question }) {
           </DialogTitle>
         </DialogHeader>
 
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          {uniqueSources.map((src) => (
+            <Badge
+              key={src}
+              variant={activeSourceFilter === src ? 'default' : 'outline'}
+              className="cursor-pointer"
+              onClick={() =>
+                setActiveSourceFilter((prev) => (prev === src ? null : src))
+              }
+            >
+              {src}
+              {activeSourceFilter === src && (
+                <X className="w-3 h-3 ml-1" />
+              )}
+            </Badge>
+          ))}
+        </div>
+
         {results.length > 0 && (
           <div className="mb-6">
             <Line data={chartData} options={chartOptions} />
@@ -116,19 +161,24 @@ export default function TestResultDialog({ open, setOpen, question }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">Rank</TableHead>
-                <TableHead className="whitespace-nowrap">Source</TableHead>
-                <TableHead className="whitespace-nowrap">Date</TableHead>
+                <TableHead onClick={() => handleSort('score')} className="cursor-pointer whitespace-nowrap">
+                  Score <ArrowUpDown className="inline w-4 h-4 ml-1" />
+                </TableHead>
+                <TableHead onClick={() => handleSort('source')} className="cursor-pointer whitespace-nowrap">
+                  Source <ArrowUpDown className="inline w-4 h-4 ml-1" />
+                </TableHead>
+                <TableHead onClick={() => handleSort('created_at')} className="cursor-pointer whitespace-nowrap">
+                  Date <ArrowUpDown className="inline w-4 h-4 ml-1" />
+                </TableHead>
                 <TableHead className="whitespace-nowrap">AI Response</TableHead>
-                <TableHead className="whitespace-nowrap">Score</TableHead>
                 <TableHead className="whitespace-nowrap">Evaluation</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {results.map((result, index) => (
+              {sortResults().map((result, index) => (
                 <TableRow key={`${result.id}-${result.source}`}>
-                  <TableCell className="align-top text-sm text-muted-foreground">
-                    {index + 1}
+                  <TableCell className="align-top text-center">
+                    <Badge className={formatScoreColor(result.score)}>{result.score}</Badge>
                   </TableCell>
                   <TableCell className="align-top text-sm font-medium">
                     {result.source}
@@ -141,11 +191,6 @@ export default function TestResultDialog({ open, setOpen, question }) {
                       className="prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: result.ai_response }}
                     />
-                  </TableCell>
-                  <TableCell className="align-top text-center">
-                    <Badge className={formatScoreColor(result.score)}>
-                      {result.score}
-                    </Badge>
                   </TableCell>
                   <TableCell className="align-top w-[400px] max-w-[400px] text-sm whitespace-pre-line border-l">
                     <div className="text-muted-foreground">{result.explanation}</div>

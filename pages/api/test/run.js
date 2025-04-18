@@ -95,7 +95,7 @@ Scoring Guidelines:
 - **25 to 49**: Limited correctness, lacks critical information, or includes factual inaccuracies.
 - **0 to 24**: Mostly or completely incorrect, misleading, or irrelevant.
 
-Your output **must match the source name exactly** as provided in the Responses section (e.g., "Response 1 (Source: Gradio)"). Do not use generic labels like "Response 1".
+Your output **must match the source name exactly** as provided in the Responses section (e.g., Gradio). Do not use generic labels like "Response 1" or "Response 1 (Source: Gradio)".
 
 Return ONLY valid JSON in the following format:
 [
