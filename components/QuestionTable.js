@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import TestResultDialog from './TestResultDialog';
+import { Filter } from 'lucide-react';
 
 export default function QuestionTable({
     questions,
@@ -29,6 +30,7 @@ export default function QuestionTable({
     const [deleteConfirm, setDeleteConfirm] = useState(null);
     const [password, setPassword] = useState('');
     const [averageScores, setAverageScores] = useState({});
+    const [showLatestScores, setShowLatestScores] = useState(false);
 
     const formatScoreColor = (score) => {
         if (score === 'N/A') return 'bg-gray-200 text-gray-800';
@@ -39,36 +41,39 @@ export default function QuestionTable({
     };
 
     useEffect(() => {
-        const fetchAverageScores = async () => {
+        const fetchScores = async () => {
             const scores = {};
             for (const question of questions) {
                 try {
                     const res = await fetch(`/api/results/${question.id}`);
                     const results = await res.json();
 
-                    const gradio = results.filter(r => r.source === 'Gradio');
-                    const bridgeIT = results.filter(r => r.source === 'BridgeIT');
-                    const galileo = results.filter(r => r.source === 'Galileo');
-                    const teamInstance = results.filter(r => r.source === 'IntersightAI-Team-Instance');
-
+                    const groupBySource = (source) => results.filter(r => r.source === source);
                     const avg = (arr) => arr.length > 0 ? (arr.reduce((sum, r) => sum + r.score, 0) / arr.length).toFixed(1) : 'N/A';
+                    const latest = (arr) => arr.length > 0 ? arr[0].score.toFixed(1) : 'N/A';
 
                     scores[question.id] = {
-                        gradio: avg(gradio),
-                        bridgeIT: avg(bridgeIT),
-                        galileo: avg(galileo),
-                        teamInstance: avg(teamInstance),
+                        gradio: { avg: avg(groupBySource('Gradio')), latest: latest(groupBySource('Gradio')) },
+                        bridgeIT: { avg: avg(groupBySource('BridgeIT')), latest: latest(groupBySource('BridgeIT')) },
+                        galileo: { avg: avg(groupBySource('Galileo')), latest: latest(groupBySource('Galileo')) },
+                        teamInstance: { avg: avg(groupBySource('IntersightAI-Team-Instance')), latest: latest(groupBySource('IntersightAI-Team-Instance')) },
                     };
                 } catch (error) {
                     console.error(`Failed to fetch results for question ${question.id}:`, error);
-                    scores[question.id] = { gradio: 'N/A', bridgeIT: 'N/A', galileo: 'N/A', teamInstance: 'N/A' };
+                    scores[question.id] = {
+                        gradio: { avg: 'N/A', latest: 'N/A' },
+                        bridgeIT: { avg: 'N/A', latest: 'N/A' },
+                        galileo: { avg: 'N/A', latest: 'N/A' },
+                        teamInstance: { avg: 'N/A', latest: 'N/A' },
+                    };
                 }
             }
             setAverageScores(scores);
         };
 
-        if (questions.length > 0) fetchAverageScores();
+        if (questions.length > 0) fetchScores();
     }, [questions]);
+
 
     const handleRunTest = async (questionId, questionText) => {
         if (isTesting) return;
@@ -150,6 +155,16 @@ export default function QuestionTable({
 
     return (
         <>
+            <div className="flex justify-end mb-2">
+                <Button
+                    variant="ghost"
+                    onClick={() => setShowLatestScores(prev => !prev)}
+                    className="flex items-center gap-1 text-sm"
+                >
+                    <Filter className="w-4 h-4" />
+                    {showLatestScores ? "Showing Latest Scores" : "Showing Average Scores"}
+                </Button>
+            </div>
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -180,17 +195,22 @@ export default function QuestionTable({
                                 )}
                             </TableCell>
                             <TableCell className="text-center">
-                                <Badge className={formatScoreColor(averageScores[q.id]?.gradio)}>{averageScores[q.id]?.gradio || 'N/A'}</Badge>
+                                <Badge className={formatScoreColor(averageScores[q.id]?.gradio?.[showLatestScores ? 'latest' : 'avg'])}>
+                                    {averageScores[q.id]?.gradio?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
+                                </Badge>
                             </TableCell>
                             <TableCell className="text-center">
-                                <Badge className={formatScoreColor(averageScores[q.id]?.bridgeIT)}>{averageScores[q.id]?.bridgeIT || 'N/A'}</Badge>
-                            </TableCell>
+                                <Badge className={formatScoreColor(averageScores[q.id]?.bridgeIT?.[showLatestScores ? 'latest' : 'avg'])}>
+                                    {averageScores[q.id]?.bridgeIT?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
+                                </Badge>                            </TableCell>
                             <TableCell className="text-center">
-                                <Badge className={formatScoreColor(averageScores[q.id]?.galileo)}>{averageScores[q.id]?.galileo || 'N/A'}</Badge>
-                            </TableCell>
+                                <Badge className={formatScoreColor(averageScores[q.id]?.galileo?.[showLatestScores ? 'latest' : 'avg'])}>
+                                    {averageScores[q.id]?.galileo?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
+                                </Badge>                            </TableCell>
                             <TableCell className="text-center">
-                                <Badge className={formatScoreColor(averageScores[q.id]?.teamInstance)}>{averageScores[q.id]?.teamInstance || 'N/A'}</Badge>
-                            </TableCell>
+                                <Badge className={formatScoreColor(averageScores[q.id]?.teamInstance?.[showLatestScores ? 'latest' : 'avg'])}>
+                                    {averageScores[q.id]?.teamInstance?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
+                                </Badge>                            </TableCell>
                             <TableCell className="space-x-2">
                                 {editMode === q.id ? (
                                     <>
