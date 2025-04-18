@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
     const result = await query(
       'INSERT INTO questions (question, golden_truth, question_embedding, golden_truth_embedding) VALUES ($1, $2, $3, $4) RETURNING *',
-      [question, goldenTruth, questionEmbedding, truthEmbedding]
+      [question, goldenTruth, JSON.stringify(questionEmbedding), JSON.stringify(truthEmbedding)]
     );
 
     res.status(200).json(result.rows[0]);

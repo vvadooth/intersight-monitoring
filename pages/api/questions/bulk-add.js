@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
       await query(
         'INSERT INTO questions (question, golden_truth, question_embedding, golden_truth_embedding) VALUES ($1, $2, $3, $4)',
-        [q.question, q.goldenTruth, questionEmbedding, truthEmbedding]
+        [q.question, q.goldenTruth, JSON.stringify(questionEmbedding), JSON.stringify(truthEmbedding)]
       );
     }
     res.status(200).json({ message: 'Questions added' });

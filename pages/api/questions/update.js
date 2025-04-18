@@ -33,7 +33,7 @@ export default async function handler(req, res) {
 
     const result = await query(
       'UPDATE questions SET question = $1, golden_truth = $2, question_embedding = $3, golden_truth_embedding = $4 WHERE id = $5 RETURNING *',
-      [question, goldenTruth, questionEmbedding, truthEmbedding, id]
+      [question, goldenTruth, JSON.stringify(questionEmbedding), JSON.stringify(truthEmbedding), id]
     );
 
     res.status(200).json(result.rows[0]);
