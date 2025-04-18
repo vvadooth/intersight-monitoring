@@ -170,7 +170,7 @@ export default async function handler(req, res) {
           matchedResponse.content,
           evaluation.score,
           evaluation.explanation,
-          evaluation.source,
+          cleanSource,
         ]
       );
     
