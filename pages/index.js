@@ -14,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import MetaEvalDialog from '@/components/MetaEvalDialog';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -25,6 +26,7 @@ export default function Home() {
   const [testContext, setTestContext] = useState('');
   const [overallGraphData, setOverallGraphData] = useState(null);
   const logRef = useRef(null);
+  const [showMetaDialog, setShowMetaDialog] = useState(false);
 
   const fetchQuestions = async () => {
     const res = await fetch('/api/questions/list');
@@ -174,6 +176,7 @@ export default function Home() {
             <Button onClick={() => setOpenAddDialog(true)} disabled={isTesting}>
               Add Question
             </Button>
+            <Button onClick={() => setShowMetaDialog(true)}>View Meta Evaluation</Button>
             {questions.length > 0 && (
               <Button onClick={handleRunAllTests} disabled={isTesting}>
                 {isTesting ? 'Running Tests…' : 'Run All Tests'}
@@ -227,6 +230,8 @@ export default function Home() {
       </Card>
 
       <AddQuestionDialog open={openAddDialog} setOpen={setOpenAddDialog} fetchQuestions={fetchQuestions} />
+      <MetaEvalDialog open={showMetaDialog} setOpen={setShowMetaDialog} />
     </div>
   );
+  
 }
