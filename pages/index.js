@@ -94,7 +94,7 @@ export default function Home() {
         const q = questions[index];
         const logTime = new Date().toLocaleTimeString();
         setTestLogs((prev) => [...prev, `${logTime} 🔄 Q${index + 1}: "${q.question.slice(0, 40)}..."`]);
-
+ 
         try {
           const res = await fetch('/api/test/run', {
             method: 'POST',
