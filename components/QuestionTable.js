@@ -57,6 +57,7 @@ export default function QuestionTable({
                         bridgeIT: { avg: avg(groupBySource('BridgeIT')), latest: latest(groupBySource('BridgeIT')) },
                         galileo: { avg: avg(groupBySource('Galileo')), latest: latest(groupBySource('Galileo')) },
                         teamInstance: { avg: avg(groupBySource('IntersightAI-Team-Instance')), latest: latest(groupBySource('IntersightAI-Team-Instance')) },
+                        finAI: { avg: avg(groupBySource('FinAI')), latest: latest(groupBySource('FinAI')) },
                     };
                 } catch (error) {
                     console.error(`Failed to fetch results for question ${question.id}:`, error);
@@ -65,6 +66,7 @@ export default function QuestionTable({
                         bridgeIT: { avg: 'N/A', latest: 'N/A' },
                         galileo: { avg: 'N/A', latest: 'N/A' },
                         teamInstance: { avg: 'N/A', latest: 'N/A' },
+                        finAI: { avg: 'N/A', latest: 'N/A' },
                     };
                 }
             }
@@ -174,6 +176,7 @@ export default function QuestionTable({
                         <TableHead>Avg BridgeIT</TableHead>
                         <TableHead>Avg Galileo</TableHead>
                         <TableHead>Avg Team Instance</TableHead>
+                        <TableHead>Avg FinAI</TableHead>
                         <TableHead>Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -210,7 +213,13 @@ export default function QuestionTable({
                             <TableCell className="text-center">
                                 <Badge className={formatScoreColor(averageScores[q.id]?.teamInstance?.[showLatestScores ? 'latest' : 'avg'])}>
                                     {averageScores[q.id]?.teamInstance?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
-                                </Badge>                            </TableCell>
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <Badge className={formatScoreColor(averageScores[q.id]?.finAI?.[showLatestScores ? 'latest' : 'avg'])}>
+                                    {averageScores[q.id]?.finAI?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
+                                </Badge>
+                            </TableCell>
                             <TableCell className="space-x-2">
                                 {editMode === q.id ? (
                                     <>

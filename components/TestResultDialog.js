@@ -102,6 +102,13 @@ export default function TestResultDialog({ open, setOpen, question }) {
         backgroundColor: 'rgba(255, 165, 0, 0.2)',
         fill: true,
       },
+      {
+        label: `Score for "${question.question}" (FinAI)`,
+        data: sortResults().filter((r) => r.source === 'FinAI').map((r) => r.score),
+        borderColor: 'rgba(153, 102, 255, 1)',
+        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+        fill: true,
+    },
     ],
   };
 

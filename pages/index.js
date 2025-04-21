@@ -46,7 +46,7 @@ export default function Home() {
       (a, b) => new Date(a) - new Date(b)
     );
 
-    const sources = ['Gradio', 'BridgeIT', 'Galileo', 'IntersightAI-Team-Instance'];
+    const sources = ['Gradio', 'BridgeIT', 'Galileo', 'IntersightAI-Team-Instance', 'FinAI'];
 
     const datasets = sources.map((source, index) => {
       const scores = dates.map((date) => {
@@ -65,6 +65,7 @@ export default function Home() {
         'rgba(192, 75, 192, 1)',
         'rgba(75, 75, 192, 1)',
         'rgba(255, 165, 0, 1)',
+        'rgba(153, 102, 255, 1)', 
       ];
       const bgColorMap = colorMap.map((c) => c.replace(', 1)', ', 0.2)'));
 

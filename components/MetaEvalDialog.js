@@ -17,7 +17,7 @@ import {
 import { Filter, ArrowUpDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
-const sources = ['All', 'Gradio', 'BridgeIT', 'Galileo', 'IntersightAI-Team-Instance'];
+const sources = ['All', 'Gradio', 'BridgeIT', 'Galileo', 'IntersightAI-Team-Instance', 'FinAI'];
 const sortOptions = ['Newest First', 'Oldest First'];
 
 export default function MetaEvalDialog({ open, setOpen }) {
@@ -121,6 +121,7 @@ export default function MetaEvalDialog({ open, setOpen }) {
                 BridgeIT: 'bg-pink-100 text-pink-800 border-pink-300',
                 Galileo: 'bg-indigo-100 text-indigo-800 border-indigo-300',
                 'IntersightAI-Team-Instance': 'bg-orange-100 text-orange-800 border-orange-300',
+                FinAI: 'bg-purple-100 text-purple-800 border-purple-300',
                 Default: 'bg-gray-100 text-gray-800 border-gray-300',
               };
 
