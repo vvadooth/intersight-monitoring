@@ -98,7 +98,7 @@ export default async function handler(req, res) {
     // Verify the webhook signature
     const rawBody = Buffer.from(JSON.stringify(req.body));
     const signature = req.headers['x-hub-signature'];
-    const computedSignature = 'sha1=' + crypto.createHmac('sha1', process.env.CLIENT_SECRET)
+    const computedSignature = 'sha1=' + crypto.createHmac('sha1', process.env.CLIENT_SECRET_INTERCOM)
       .update(rawBody)
       .digest('hex');
 
