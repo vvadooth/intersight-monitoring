@@ -46,7 +46,7 @@ export default function Home() {
       (a, b) => new Date(a) - new Date(b)
     );
 
-    const sources = ['Gradio', 'BridgeIT', 'Galileo', 'IntersightAI-Team-Instance', 'FinAI'];
+    const sources = ['Gradio', 'IntersightAI-Team-Instance', 'FinAI'];
 
     const datasets = sources.map((source, index) => {
       const scores = dates.map((date) => {

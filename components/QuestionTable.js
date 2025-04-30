@@ -54,8 +54,8 @@ export default function QuestionTable({
 
                     scores[question.id] = {
                         gradio: { avg: avg(groupBySource('Gradio')), latest: latest(groupBySource('Gradio')) },
-                        bridgeIT: { avg: avg(groupBySource('BridgeIT')), latest: latest(groupBySource('BridgeIT')) },
-                        galileo: { avg: avg(groupBySource('Galileo')), latest: latest(groupBySource('Galileo')) },
+                        // bridgeIT: { avg: avg(groupBySource('BridgeIT')), latest: latest(groupBySource('BridgeIT')) },
+                        // galileo: { avg: avg(groupBySource('Galileo')), latest: latest(groupBySource('Galileo')) },
                         teamInstance: { avg: avg(groupBySource('IntersightAI-Team-Instance')), latest: latest(groupBySource('IntersightAI-Team-Instance')) },
                         finAI: { avg: avg(groupBySource('FinAI')), latest: latest(groupBySource('FinAI')) },
                     };
@@ -63,8 +63,8 @@ export default function QuestionTable({
                     console.error(`Failed to fetch results for question ${question.id}:`, error);
                     scores[question.id] = {
                         gradio: { avg: 'N/A', latest: 'N/A' },
-                        bridgeIT: { avg: 'N/A', latest: 'N/A' },
-                        galileo: { avg: 'N/A', latest: 'N/A' },
+                        // bridgeIT: { avg: 'N/A', latest: 'N/A' },
+                        // galileo: { avg: 'N/A', latest: 'N/A' },
                         teamInstance: { avg: 'N/A', latest: 'N/A' },
                         finAI: { avg: 'N/A', latest: 'N/A' },
                     };
@@ -173,8 +173,8 @@ export default function QuestionTable({
                         <TableHead>Question</TableHead>
                         <TableHead>Golden Truth</TableHead>
                         <TableHead>Avg Gradio</TableHead>
-                        <TableHead>Avg BridgeIT</TableHead>
-                        <TableHead>Avg Galileo</TableHead>
+                        {/* <TableHead>Avg BridgeIT</TableHead>
+                        <TableHead>Avg Galileo</TableHead> */}
                         <TableHead>Avg Team Instance</TableHead>
                         <TableHead>Avg FinAI</TableHead>
                         <TableHead>Actions</TableHead>
@@ -202,14 +202,14 @@ export default function QuestionTable({
                                     {averageScores[q.id]?.gradio?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
                                 </Badge>
                             </TableCell>
-                            <TableCell className="text-center">
+                            {/* <TableCell className="text-center">
                                 <Badge className={formatScoreColor(averageScores[q.id]?.bridgeIT?.[showLatestScores ? 'latest' : 'avg'])}>
                                     {averageScores[q.id]?.bridgeIT?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
                                 </Badge>                            </TableCell>
                             <TableCell className="text-center">
                                 <Badge className={formatScoreColor(averageScores[q.id]?.galileo?.[showLatestScores ? 'latest' : 'avg'])}>
                                     {averageScores[q.id]?.galileo?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
-                                </Badge>                            </TableCell>
+                                </Badge>                            </TableCell> */}
                             <TableCell className="text-center">
                                 <Badge className={formatScoreColor(averageScores[q.id]?.teamInstance?.[showLatestScores ? 'latest' : 'avg'])}>
                                     {averageScores[q.id]?.teamInstance?.[showLatestScores ? 'latest' : 'avg'] ?? 'N/A'}
