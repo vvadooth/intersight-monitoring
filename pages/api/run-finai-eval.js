@@ -1,5 +1,7 @@
-import { query } from '../../lib/db';
-import OpenAI from 'openai';
+require('dotenv').config();
+const crypto = require('crypto');
+const { query } = require('../../lib/db');
+const OpenAI = require('openai');
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -28,9 +30,6 @@ Scoring Guidelines:
 
 Your output **must match the source name exactly** as provided in the Responses section (e.g., FinAI). Do not use generic labels like "Response 1" or "Response 1 (Source: FinAI)".
 
-
-Remember, never ever give "Response 1 (Source: FinAI)", source is always "FinAI"
-
 Return ONLY valid JSON in the following format:
 [
   {
@@ -40,7 +39,6 @@ Return ONLY valid JSON in the following format:
   },
   ...
 ]
-
 
 DO NOT include any text outside the JSON. DO NOT use markdown. DO NOT add commentary before or after.
 
@@ -57,18 +55,16 @@ ${responses.map((r, i) => `Response ${i + 1} (Source: ${r.source}):\n${r.content
     });
 
     let content = response.choices[0].message.content || '';
-    console.log('Raw OpenAI Response:', content); // Debug raw response
+    console.log('Raw OpenAI Response:', content);
 
-    // Enhanced cleaning: remove code fences, extra whitespace, and non-JSON content
     content = content
-      .replace(/```json\n?|\n?```/g, '') // Remove ```json and ```
-      .replace(/^\s*[\r\n]+|[\r\n]+\s*$/g, '') // Remove leading/trailing newlines
-      .replace(/\s+/g, ' ') // Normalize multiple spaces
+      .replace(/```json\n?|\n?```/g, '')
+      .replace(/^\s*[\r\n]+|[\r\n]+\s*$/g, '')
+      .replace(/\s+/g, ' ')
       .trim();
 
-    console.log('Cleaned Content:', content); // Debug cleaned content
+    console.log('Cleaned Content:', content);
 
-    // Attempt to parse JSON
     try {
       const parsed = JSON.parse(content);
       if (!Array.isArray(parsed)) {
@@ -77,7 +73,6 @@ ${responses.map((r, i) => `Response ${i + 1} (Source: ${r.source}):\n${r.content
       return parsed;
     } catch (parseError) {
       console.error('Failed to parse JSON:', content, parseError);
-      // Fallback: return a default response to avoid crashing
       return responses.map(r => ({
         source: r.source,
         score: 0,
@@ -86,7 +81,6 @@ ${responses.map((r, i) => `Response ${i + 1} (Source: ${r.source}):\n${r.content
     }
   } catch (error) {
     console.error('OpenAI API Error:', error.message);
-    // Fallback for API errors
     return responses.map(r => ({
       source: r.source,
       score: 0,
@@ -107,6 +101,92 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    const data = req.body;
+
+    // Check if this is an Intercom webhook request
+    const signature = req.headers['x-hub-signature'];
+    if (signature) {
+      // Verify the webhook signature
+      const rawBody = Buffer.from(JSON.stringify(req.body));
+      const computedSignature = 'sha1=' + crypto.createHmac('sha1', process.env.CLIENT_SECRET_INTERCOM)
+        .update(rawBody)
+        .digest('hex');
+
+      if (signature !== computedSignature) {
+        console.log('Signature verification failed');
+        return res.status(403).json({ error: 'Invalid signature' });
+      }
+
+      console.log('Received webhook payload:', JSON.stringify(data, null, 2));
+
+      if (data.topic !== 'conversation.operator.replied') {
+        return res.status(200).json({ status: 'ignored' });
+      }
+
+      const conversationId = data.data.item.id;
+      const finResponseRaw = data.data.item.conversation_parts.conversation_parts[0].body;
+      const finResponse = finResponseRaw.replace(/<p>|<\/p>/g, '');
+
+      // Extract user_id
+      let userId = 'unknown_user';
+      if (data.data.item.contacts?.contacts?.[0]?.id) {
+        userId = data.data.item.contacts.contacts[0].id;
+      }
+
+      // Extract the user's question (from conversation source)
+      let userQuestion = '';
+      if (data.data.item.source?.body) {
+        userQuestion = data.data.item.source.body.replace(/<p>|<\/p>/g, '');
+      }
+
+      console.log(`Conversation ID: ${conversationId}, User ID: ${userId}, Fin Response: ${finResponse}, User Question: ${userQuestion}`);
+
+      // Fetch all questions from the database
+      const questionsResult = await query('SELECT id, question, golden_truth FROM questions ORDER BY id', []);
+      const questions = questionsResult.rows;
+
+      // Check if the user's question matches any in the database (word for word)
+      const matchedQuestion = questions.find(q => q.question.trim().toLowerCase() === userQuestion.trim().toLowerCase());
+
+      if (!matchedQuestion) {
+        console.log('No matching question found in database');
+        return res.status(200).json({ status: 'no_match' });
+      }
+
+      console.log(`Matched question ID: ${matchedQuestion.id}, Question: ${matchedQuestion.question}`);
+
+      // Evaluate Fin's response
+      const responses = [{ source: 'FinAI', content: finResponse }];
+      const evaluations = await rankResponses(responses, matchedQuestion.golden_truth);
+
+      const results = [];
+      for (const evaluation of evaluations) {
+        const cleanSource = evaluation.source;
+        const matchedResponse = responses.find(r => r.source === cleanSource);
+
+        if (!matchedResponse) {
+          console.error('❌ Could not find response for source:', cleanSource);
+          continue;
+        }
+
+        const result = await query(
+          'INSERT INTO test_results (question_id, ai_response, score, explanation, source) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [
+            matchedQuestion.id,
+            matchedResponse.content,
+            evaluation.score,
+            evaluation.explanation,
+            cleanSource,
+          ]
+        );
+
+        results.push(result.rows[0]);
+      }
+
+      return res.status(200).json({ status: 'success', results });
+    }
+
+    // Existing logic for manual evaluation requests
     const { questionId, aiResponse, responses } = req.body;
 
     // Handle all questions mode
@@ -136,7 +216,7 @@ export default async function handler(req, res) {
 
           if (!matchedResponse) {
             console.error('❌ Could not find response for source:', cleanSource);
-            continue; // Skip instead of throwing to continue processing
+            continue;
           }
 
           const result = await query(
@@ -158,7 +238,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'No valid responses provided or questions found' });
       }
 
-      return res.status(200).json(results);
+      return res.status(200).json({ status: 'success', results });
     }
 
     // Handle single question mode
@@ -178,10 +258,10 @@ export default async function handler(req, res) {
     }
 
     const responsesSingle = [{ source: 'FinAI', content: aiResponse }];
-    const evaluations = await rankResponses(responsesSingle, question.golden_truth);
+    const evaluationsSingle = await rankResponses(responsesSingle, question.golden_truth);
 
     const results = [];
-    for (const evaluation of evaluations) {
+    for (const evaluation of evaluationsSingle) {
       const cleanSource = evaluation.source;
       const matchedResponse = responsesSingle.find(r => r.source === cleanSource);
 
@@ -204,9 +284,9 @@ export default async function handler(req, res) {
       results.push(result.rows[0]);
     }
 
-    res.status(200).json(results);
+    return res.status(200).json({ status: 'success', results });
   } catch (error) {
     console.error('Handler Error:', error);
-    res.status(500).json({ error: 'Failed to run evaluation' });
+    return res.status(500).json({ error: 'Failed to run evaluation' });
   }
 }
