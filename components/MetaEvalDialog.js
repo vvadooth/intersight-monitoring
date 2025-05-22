@@ -117,7 +117,7 @@ export default function MetaEvalDialog({ open, setOpen }) {
           <ScrollArea className="h-[65vh] rounded border bg-muted p-4">
             {filteredEvals.map((evalObj, i) => {
               const sourceColors = {
-                Gradio: 'bg-teal-100 text-teal-800 border-teal-300',
+                Gradio: 'bg-teal-100 text-teal-800 border-teal-300', 
                 // BridgeIT: 'bg-pink-100 text-pink-800 border-pink-300',
                 // Galileo: 'bg-indigo-100 text-indigo-800 border-indigo-300',
                 'IntersightAI-Team-Instance': 'bg-orange-100 text-orange-800 border-orange-300',
